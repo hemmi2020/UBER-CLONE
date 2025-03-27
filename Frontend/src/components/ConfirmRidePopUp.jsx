@@ -1,14 +1,21 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
-const ConfirmedRide = (props) => {
+const ConfirmRidePopUp = (props) => {
   return (
     <div>
-     <h5 className="p-1 text-center absolute w-[93%] top-0 " onClick={()=>{
-          props.setConfirmRidePanel(false)
+      <h5 className="p-1 text-center absolute w-[93%] top-0 " onClick={()=>{
+        props.setRidePopUpPanel(false)
         }}><i className="text-3xl text-gray-200 ri-arrow-down-wide-line"></i></h5>
-        <h3 className="text-2xl font-semibold mb-5">Confirm your Ride</h3>
+        <h3 className="text-2xl font-semibold mb-5">Confirm this ride to start!</h3>
+        <div className='flex items-center justify-between p-3 bg-yellow-400 rounded-lg mt-3'>
+            <div className='flex items-center gap-3 '>
+                <img className='h-10 w-10 object-cover rounded-full' src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cmFuZG9tJTIwcGVvcGxlfGVufDB8fDB8fHww" alt="" />
+                <h2 className='text-lg font-medium'>Hamza Khan</h2>
+            </div>
+            <h5 className='text-lg font-semibold'>7 Km</h5>
+        </div>
         <div className='flex gap-2 justify-between flex-col items-center'>
-        <img className='h-20' src="https://www.pngplay.com/wp-content/uploads/8/Uber-PNG-Photos.png" alt="" />
         <div className='w-full mt-5'>
         <div className='flex items-center gap-5 p-2 border-gray-300 border-b-2'>
           <i className="text-lg ri-map-pin-2-line"></i>
@@ -32,15 +39,18 @@ const ConfirmedRide = (props) => {
           </div>
         </div>
         </div>
-        <button onClick={()=>{
-          props.setVehicleFound(true)
-          props.setConfirmRidePanel(false)
-        }} className='w-full mt-5 bg-green-600 text-white font-semibold p-2 rounded-lg'>
+        <Link to='/captain-riding' className='w-full mt-5 bg-green-600 text-white font-semibold p-3 rounded-lg flex items-center justify-center'>
           Confirm
+        </Link>
+        <button onClick={()=>{
+          props.setConfirmRidePopUpPanel(false)
+          props.setRidePopUpPanel(false)
+        }} className='w-full mt-1 bg-red-600 text-white font-semibold p-3 rounded-lg'>
+          Cancel
         </button>
         </div>
     </div>
   )
 }
 
-export default ConfirmedRide
+export default ConfirmRidePopUp
