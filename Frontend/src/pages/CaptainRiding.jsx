@@ -1,7 +1,31 @@
-import React from "react";
+import React,{useState, useRef} from "react";
 import { Link } from "react-router-dom";
+import FinishRide from "../components/FinishRide";
+import { useGSAP} from '@gsap/react';
+import gsap from 'gsap';
+
 
 const CaptainRiding = () => {
+
+  const [finishRidePanel, setFinishRidePanel] = useState(false)
+  const finishRidePanelRef = useRef(null)
+
+  useGSAP(
+    function () {
+      if (finishRidePanel) {
+        gsap.to(finishRidePanelRef.current, {
+          transform: "translateY(0%)",
+          duration: 0.5,
+        });
+      } else {
+        gsap.to(finishRidePanelRef.current, {
+          transform: "translateY(100%)",
+          duration: 0.5,
+        });
+      }
+    },
+    [finishRidePanel]
+  );
   return (
     <div className="h-screen">
       <div className="fixed p-6 top-0 flex items-center justify-between w-screen">
@@ -24,11 +48,24 @@ const CaptainRiding = () => {
           alt=""
         />
       </div>
-      <div className="h-1/5 p-6 flex items-center bg-yellow-400">
-        <h4 className="text-xl">4 Km away</h4>
+      <div className="h-1/5 p-6 flex items-center relative justify-between bg-yellow-400"
+      onClick={()=>{
+        setFinishRidePanel(true);
+      }}
+      >
+        <h5
+          className="p-1 text-center absolute w-[93%] top-0 "
+          onClick={() => {}}
+        >
+          <i className="text-3xl text-black ri-arrow-up-wide-line"></i>
+        </h5>
+        <h4 className="text-xl font-semibold">4 Km away</h4>
         <button className=" mt-1 bg-green-600 text-white font-semibold p-3 px-10 rounded-lg">
           Complete Ride
         </button>
+      </div>
+      <div ref={finishRidePanelRef} className="fixed w-full z-10 bottom-0  bg-white translate-y-full px-3 py-10 pt-12" >
+        <FinishRide setFinishRidePanel={setFinishRidePanel}  />
       </div>
     </div>
   );
