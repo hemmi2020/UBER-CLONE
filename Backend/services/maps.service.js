@@ -1,6 +1,7 @@
 const axios = require("axios");
+const captainModel = require("../models/captain.model");
 
-module.exports.getAddressCoordinate = async (address) => {
+const getAddressCoordinate = async (address) => {
     const apiKey = process.env.GOOGLE_MAPS_API_KEY;
     const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${apiKey}`;
 
@@ -13,13 +14,16 @@ module.exports.getAddressCoordinate = async (address) => {
                 lng: location.lng
             };
         } else {
-            throw new Error('Unable to fetch coordinates');
+            throw new Error(`Unable to fetch coordinates: ${response.data.status}`);
         }
     } catch (error) {
-        console.error(error);
-        throw error;
+        console.error('Geocoding error:', error);
+        throw new Error(`Geocoding failed: ${error.message}`);
     }
-}
+};
+
+// Export the function
+module.exports.getAddressCoordinate = getAddressCoordinate;
 
 // Calculate distance using Haversine formula
 const calculateDistance = (lat1, lng1, lat2, lng2) => {
@@ -54,16 +58,16 @@ module.exports.getDistanceTime = async (origin, destination) => {
     }
     
     try {
-        // Get coordinates for origin and destination
-        const originCoords = await this.getAddressCoordinate(origin);
-        const destCoords = await this.getAddressCoordinate(destination);
+        // Use the function directly, not through 'this'
+        const originCoords = await getAddressCoordinate(origin);
+        const destCoords = await getAddressCoordinate(destination);
         
         // Calculate distance using Haversine formula
         const distanceKm = calculateDistance(
-            originCoords.ltd, 
             originCoords.lng, 
-            destCoords.ltd, 
-            destCoords.lng
+            originCoords.ltd, 
+            destCoords.lng, 
+            destCoords.ltd
         );
         
         // Convert to meters for consistency with Google Maps API format
@@ -93,10 +97,10 @@ module.exports.getDistanceTime = async (origin, destination) => {
             }
         };
     } catch (error) {
-        console.error(error);
-        throw error;
+        console.error('Distance calculation error:', error);
+        throw new Error(`Failed to calculate distance: ${error.message}`);
     }
-}
+};
 
 module.exports.getAutoCompleteSuggestions = async (input) => {
     if (!input) {
@@ -110,10 +114,48 @@ module.exports.getAutoCompleteSuggestions = async (input) => {
         if (response.data.status === 'OK') {
             return response.data.predictions.map(prediction => prediction.description);
         } else {
-            throw new Error('Unable to fetch suggestions');
+            throw new Error(`Unable to fetch suggestions: ${response.data.status}`);
         }
-    }catch (error) {
-        console.error(error);
-        throw error;
+    } catch (error) {
+        console.error('Autocomplete error:', error);
+        throw new Error(`Autocomplete failed: ${error.message}`);
     } 
-}
+};
+
+module.exports.getCaptainInTheRadius = async (lng, ltd, radius) => {
+    console.log(`Searching for captains at [${lng}, ${ltd}] with radius ${radius}km`);
+    
+    try {
+        // First check if we have any active captains
+        const activeCaptains = await captainModel.find({ status: "active" });
+        console.log(`Total active captains: ${activeCaptains.length}`);
+        
+        // Check if any captains have geoLocation
+        const captainsWithGeo = await captainModel.find({ 
+            "geoLocation.coordinates": { $exists: true },
+            status: "active"
+        });
+        console.log(`Captains with geoLocation: ${captainsWithGeo.length}`);
+        
+        // Now try the geospatial query
+        const captainsInRadius = await captainModel.find({
+            geoLocation: {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: [lng, ltd] // longitude first, then latitude
+                    },
+                    $maxDistance: radius * 1000 // convert km to meters
+                }
+            },
+            status: "active" // Only find active captains
+        });
+        
+        console.log(`Found ${captainsInRadius.length} captains in radius`);
+        return captainsInRadius;
+    } catch (error) {
+        console.error("Error in getCaptainInTheRadius:", error);
+        // Return empty array instead of throwing to avoid breaking the flow
+        return [];
+    }
+};

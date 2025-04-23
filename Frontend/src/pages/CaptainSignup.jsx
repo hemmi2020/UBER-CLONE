@@ -12,6 +12,10 @@ const CaptainSignup = () => {
   const [lastName, setLastName] = useState("");
   const Navigate = useNavigate();
 
+
+
+  
+
   const { captain, setCaptain } = useContext(CaptainDataContext);
   const [vehicleColor, setVehicleColor] = useState("");
   const [vehiclePlate, setVehiclePlate] = useState("");

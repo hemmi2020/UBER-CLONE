@@ -1,16 +1,80 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { Link } from "react-router-dom";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import CaptainDetails from "../components/CaptainDetails";
 import RidePopUp from "../components/RidePopUp";
 import ConfirmRidePopUp from "../components/ConfirmRidePopUp";
+import SocketProvider, { SocketContext } from '../context/SocketContext';
+import { CaptainDataContext } from "../context/CaptainContext";
+import axios from "axios";
 
-const CaptainHome = () => {
-  const [ridePopUpPanel, setRidePopUpPanel] = useState(true);
+const CaptainHomeContent = () => {
+  const [ridePopUpPanel, setRidePopUpPanel] = useState(false);
   const [confirmRidePopUpPanel, setConfirmRidePopUpPanel] = useState(false);
   const ridePopUpPanelRef = useRef(null);
   const confirmRidePopUpPanelRef = useRef(null);
+  const [ride, setRide] = useState(null); // State to hold ride data
+
+  const { socket } = useContext(SocketContext);
+  const { captain } = useContext(CaptainDataContext);
+
+  useEffect(() => {
+    console.log("Socket connected:", socket.connected);
+    socket.on('connect', () => {
+      console.log("Socket connected with ID:", socket.id);
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    if (captain && captain._id) {
+      console.log("Captain ID for socket connection:", captain._id);
+      
+      // Verify socket is joining with correct data
+      socket.emit('join', {
+        userId: captain._id,
+        userType: 'captain'
+      });
+      
+      // Log when socket connects/disconnects
+      socket.on('connect', () => {
+        console.log("Socket connected with ID:", socket.id);
+      });
+      
+      socket.on('disconnect', () => {
+        console.log("Socket disconnected");
+      });
+    }
+  }, [captain, socket]);
+
+  useEffect(() => {
+    // Listen for new ride requests
+    socket.on('new-ride', (data) => {
+      console.log('Raw new ride event data:', data);
+      
+      // Make sure we're handling the data structure correctly
+      const rideData = data;
+      
+      // Set the ride state with the received data
+      setRide(rideData);
+      setRidePopUpPanel(true);
+      
+      // Log the structure to debug
+      console.log('Ride state set to:', rideData);
+    });
+  
+    return () => {
+      socket.off('new-ride');
+    };
+  }, [socket]);
+
+  async function confirmRide() {
+    const response = await axios.post(`${import.meta.env.VITE_BACKEND_URL}/rides/confirm`, {
+      // You may need to send rideId or other data here
+    });
+    setRidePopUpPanel(false);
+    setConfirmRidePopUpPanel(true);
+  }
 
   useGSAP(
     function () {
@@ -28,6 +92,7 @@ const CaptainHome = () => {
     },
     [ridePopUpPanel]
   );
+
   useGSAP(
     function () {
       if (confirmRidePopUpPanel) {
@@ -44,6 +109,7 @@ const CaptainHome = () => {
     },
     [confirmRidePopUpPanel]
   );
+
   return (
     <div className="h-screen">
       <div className="fixed p-6 top-0 flex items-center justify-between w-screen">
@@ -70,13 +136,26 @@ const CaptainHome = () => {
         <CaptainDetails />
       </div>
       <div ref={ridePopUpPanelRef} className="fixed w-full z-10 bottom-0  bg-white translate-y-full px-3 py-10 pt-12" >
-        <RidePopUp setConfirmRidePopUpPanel={setConfirmRidePopUpPanel} setRidePopUpPanel={setRidePopUpPanel} />
+        <RidePopUp ride={ride} setConfirmRidePopUpPanel={setConfirmRidePopUpPanel} setRidePopUpPanel={setRidePopUpPanel} confirmRide={confirmRide} />
       </div>
       <div ref={confirmRidePopUpPanelRef} className="fixed h-screen w-full z-10 bottom-0  bg-white translate-y-full px-3 py-10 pt-12" >
         <ConfirmRidePopUp setConfirmRidePopUpPanel={setConfirmRidePopUpPanel} setRidePopUpPanel={setRidePopUpPanel}  />
       </div>
     </div>
-    
+  );
+};
+
+const CaptainHome = () => {
+  const { captain } = React.useContext(CaptainDataContext);
+
+  if (!captain || !captain._id) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <SocketProvider userId={captain._id} userType="captain">
+      <CaptainHomeContent />
+    </SocketProvider>
   );
 };
 

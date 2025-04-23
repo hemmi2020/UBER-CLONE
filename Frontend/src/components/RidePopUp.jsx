@@ -1,6 +1,7 @@
 import React from "react";
 
 const RidePopUp = (props) => {
+  console.log("RidePopUp received ride data:", props.ride);
   return (
     <div>
       <h5
@@ -19,7 +20,7 @@ const RidePopUp = (props) => {
             src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8cmFuZG9tJTIwcGVvcGxlfGVufDB8fDB8fHww"
             alt=""
           />
-          <h2 className="text-lg font-medium">Hamza Khan</h2>
+          <h2 className="text-lg font-medium">{props.ride?.user.fullname.firstname+ "" +props.ride?.user.fullname.lastname}</h2>
         </div>
         <h5 className="text-lg font-semibold">7 Km</h5>
       </div>
@@ -30,7 +31,7 @@ const RidePopUp = (props) => {
             <div>
               <h3 className="text-lg font-medium">562/11-A</h3>
               <p className="text-sm -mt-1 text-gray-600">
-                gulshan-e-anila, karachi
+              {props.ride?.pickup}
               </p>
             </div>
           </div>
@@ -39,7 +40,7 @@ const RidePopUp = (props) => {
             <div>
               <h3 className="text-lg font-medium">562/11-A</h3>
               <p className="text-sm -mt-1 text-gray-600">
-                gulshan-e-anila, karachi
+              {props.ride?.destination}
               </p>
             </div>
           </div>
@@ -63,6 +64,7 @@ const RidePopUp = (props) => {
           <button
             onClick={() => {
               props.setConfirmRidePopUpPanel(true);
+              props.confirmRide()
             }}
             className=" mt-1 bg-green-600 text-white font-semibold p-3 px-10 rounded-lg"
           >

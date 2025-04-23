@@ -35,6 +35,8 @@ async function getFare(pickup, destination) {
     return fare;
 }
 
+module.exports.getFare = getFare;
+
 function getOtp(num){
 
     function generateOtp(num) {
@@ -61,6 +63,33 @@ module.exports.createRide = async ({
         fare: fare[vehicleType],
     })
     return ride;
+}
+
+
+module.exports.confirmRide = async ({
+    rideId, captain
+}) => {
+    if (!rideId) {
+        throw new Error('Ride id is required');
+    }
+
+    await rideModel.findOneAndUpdate({
+        _id: rideId
+    }, {
+        status: 'accepted',
+        captain: captain._id
+    })
+
+    const ride = await rideModel.findOne({
+        _id: rideId
+    }).populate('user').populate('captain').select('+otp');
+
+    if (!ride) {
+        throw new Error('Ride not found');
+    }
+
+    return ride;
+
 }
 
 
